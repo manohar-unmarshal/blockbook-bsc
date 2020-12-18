@@ -182,7 +182,7 @@ func (rd *RatesDownloader) syncLatest() error {
 // syncHistorical downloads all the historical data since the specified timestamp till today,
 // then continues to download the latest rates
 func (rd *RatesDownloader) syncHistorical(timestamp *time.Time) error {
-	period := time.Duration(1) * time.Second
+	period := time.Duration(30) * time.Second
 	timer := time.NewTimer(period)
 	for {
 		if rd.startTime.Sub(*timestamp) < time.Duration(time.Hour*24) {

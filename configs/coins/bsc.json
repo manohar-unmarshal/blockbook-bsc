@@ -14,7 +14,7 @@
     "blockbook_public": 9137
   },
   "ipc": {
-    "rpc_url_template": "ws://127.0.0.1:{{.Ports.BackendRPC}}",
+    "rpc_url_template": "https://bsc-dataseed.binance.org/",
     "rpc_timeout": 25
   },
   "backend": {
@@ -43,7 +43,7 @@
     "additional_params": "",
     "block_chain": {
       "parse": true,
-      "mempool_workers": 8,
+      "mempool_workers": 32,
       "mempool_sub_workers": 2,
       "block_addresses_to_keep": 300,
       "additional_params": {
