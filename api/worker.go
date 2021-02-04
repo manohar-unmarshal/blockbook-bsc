@@ -10,6 +10,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/golang/glog"
@@ -751,6 +752,7 @@ func (w *Worker) getEthereumTypeAddressBalances(addrDesc bchain.AddressDescripto
 		}
 		if details > AccountDetailsBasic {
 			tokens = make([]Token, len(ca.Contracts))
+			tokenDetails := w.getTokenBalancesInParallel(addrDesc, ca.Contracts, details)
 			var j int
 			for i, c := range ca.Contracts {
 				if len(filterDesc) > 0 {
@@ -760,7 +762,7 @@ func (w *Worker) getEthereumTypeAddressBalances(addrDesc bchain.AddressDescripto
 					// filter only transactions of this contract
 					filter.Vout = i + 1
 				}
-				t, err := w.getEthereumToken(i+1, addrDesc, c.Contract, details, int(c.Txs))
+				t := tokenDetails[i]
 				if err != nil {
 					return nil, nil, nil, 0, 0, 0, err
 				}
@@ -807,6 +809,32 @@ func (w *Worker) getEthereumTypeAddressBalances(addrDesc bchain.AddressDescripto
 		}
 	}
 	return ba, tokens, ci, n, nonContractTxs, totalResults, nil
+}
+
+func (w *Worker)getTokenBalancesInParallel(addrDesc bchain.AddressDescriptor, contracts []db.AddrContract, details AccountDetails) (tokens []*Token)  {
+	tChan := make(chan *Token)
+	var wg sync.WaitGroup
+	for i, c := range contracts {
+		wg.Add(1)
+		go func(i int, contract bchain.AddressDescriptor) {
+			defer wg.Done()
+			t, err := w.getEthereumToken(i+1, addrDesc, contract, details, int(c.Txs))
+			if err != nil {
+				glog.Error("error in getting ethereum token", err)
+				return
+			}
+			tChan <- t
+		}(i, c.Contract)
+	}
+	go func() {
+		wg.Wait()
+		close(tChan)
+	}()
+
+	for token := range tChan {
+		tokens = append(tokens, token)
+	}
+	return
 }
 
 func (w *Worker) txFromTxid(txid string, bestheight uint32, option AccountDetails, blockInfo *db.BlockInfo) (*Tx, error) {
