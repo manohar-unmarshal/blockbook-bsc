@@ -10,6 +10,7 @@ import (
 	"math/big"
 	"strings"
 	"sync"
+	"time"
 	"unicode/utf8"
 
 	ethcommon "github.com/ethereum/go-ethereum/common"
@@ -366,7 +367,7 @@ func getTokenHubTransferInFromTx(tx *rpcTransaction) ([]bchain.Erc20Transfer, er
 }
 
 func (b *EthereumRPC) ethCall(data, to string) (string, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), b.timeout)
+	ctx, cancel := context.WithTimeout(context.Background(), 25 * time.Second)
 	defer cancel()
 	var r string
 	err := b.rpc.CallContext(ctx, &r, "eth_call", map[string]interface{}{
