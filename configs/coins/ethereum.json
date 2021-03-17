@@ -14,7 +14,7 @@
     "blockbook_public": 9136
   },
   "ipc": {
-    "rpc_url_template": "https://mainnet.infura.io/v3/ccf47d03e44f47cc95a995faaf54db95",
+    "rpc_url_template": "http://10.15.0.210",
     "rpc_timeout": 25
   },
   "backend": {
