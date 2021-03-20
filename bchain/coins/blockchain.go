@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/trezor/blockbook/bchain/coins/heco"
 	"io/ioutil"
 	"math/big"
 	"reflect"
@@ -65,7 +66,7 @@ func init() {
 	BlockChainFactories["Zcash"] = zec.NewZCashRPC
 	BlockChainFactories["Zcash Testnet"] = zec.NewZCashRPC
 	BlockChainFactories["BSC"] = bsc.NewEthereumRPC
-	BlockChainFactories["Huobi eco"] = eth.NewEthereumRPC
+	BlockChainFactories["Huobi eco"] = heco.NewEthereumRPC
 	BlockChainFactories["BSC Testnet"] = bsc.NewEthereumRPC
 	BlockChainFactories["Ethereum"] = eth.NewEthereumRPC
 	BlockChainFactories["Ethereum Classic"] = eth.NewEthereumRPC
