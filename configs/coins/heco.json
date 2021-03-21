@@ -18,7 +18,7 @@
     "rpc_timeout": 25
   },
   "backend": {
-    "package_name": "backend-ethereum",
+    "package_name": "backend-heco",
     "package_revision": "satoshilabs-1",
     "system_user": "heco",
     "version": "1.9.24-cc05b050",
@@ -38,8 +38,8 @@
     "client_config_file": ""
   },
   "blockbook": {
-    "package_name": "blockbook-ethereum",
-    "system_user": "blockbook-ethereum",
+    "package_name": "blockbook-heco",
+    "system_user": "blockbook-heco",
     "internal_binding_template": ":{{.Ports.BlockbookInternal}}",
     "public_binding_template": ":{{.Ports.BlockbookPublic}}",
     "explorer_url": "",

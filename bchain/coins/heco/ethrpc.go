@@ -49,7 +49,7 @@ type EthereumRPC struct {
 	rpc                  *rpc.Client
 	timeout              time.Duration
 	Parser               *EthereumParser
-	Mempool              *bchain.MempoolBscType
+	Mempool              *bchain.MempoolEthereumType
 	mempoolInitialized   bool
 	bestHeaderLock       sync.Mutex
 	bestHeader           *ethtypes.Header
@@ -171,8 +171,7 @@ func (b *EthereumRPC) Initialize() error {
 // CreateMempool creates mempool if not already created, however does not initialize it
 func (b *EthereumRPC) CreateMempool(chain bchain.BlockChain) (bchain.Mempool, error) {
 	if b.Mempool == nil {
-		//b.Mempool = bchain.NewMempoolEthereumType(chain, b.ChainConfig.MempoolTxTimeoutHours, b.ChainConfig.QueryBackendOnMempoolResync)
-		b.Mempool = bchain.NewMempoolBscType(chain, b.ChainConfig.MempoolTxTimeoutHours, b.ChainConfig.QueryBackendOnMempoolResync)
+		b.Mempool = bchain.NewMempoolEthereumType(chain, b.ChainConfig.MempoolTxTimeoutHours, b.ChainConfig.QueryBackendOnMempoolResync)
 		glog.Info("mempool created, MempoolTxTimeoutHours=", b.ChainConfig.MempoolTxTimeoutHours, ", QueryBackendOnMempoolResync=", b.ChainConfig.QueryBackendOnMempoolResync)
 	}
 	return b.Mempool, nil
@@ -351,9 +350,7 @@ func (b *EthereumRPC) GetChainInfo() (*bchain.ChainInfo, error) {
 		ProtocolVersion: protocol,
 	}
 	idi := int(id.Uint64())
-	//mainnet is 56
-	//testnet is 97
-	if idi == 56 {
+	if idi == int(MainNet) {
 		rv.Chain = "mainnet"
 	} else {
 		rv.Chain = "testnet " + strconv.Itoa(idi)
@@ -485,7 +482,6 @@ func (b *EthereumRPC) getBlockRaw(hash string, height uint32, fullTxs bool) (jso
 	} else {
 		err = b.rpc.CallContext(ctx, &raw, "eth_getBlockByNumber", fmt.Sprintf("%#x", height), fullTxs)
 	}
-
 	if err != nil {
 		return nil, errors.Annotatef(err, "hash %v, height %v", hash, height)
 	} else if len(raw) == 0 {
@@ -502,26 +498,6 @@ func (b *EthereumRPC) getERC20EventsForBlock(blockNumber string) (map[string][]*
 		"fromBlock": blockNumber,
 		"toBlock":   blockNumber,
 		"topics":    []string{erc20TransferEventSignature},
-	})
-	if err != nil {
-		return nil, errors.Annotatef(err, "blockNumber %v", blockNumber)
-	}
-	r := make(map[string][]*rpcLog)
-	for i := range logs {
-		l := &logs[i]
-		r[l.Hash] = append(r[l.Hash], &l.rpcLog)
-	}
-	return r, nil
-}
-
-func (b *EthereumRPC) getTokenHubEventsForBlock(blockNumber string) (map[string][]*rpcLog, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), b.timeout)
-	defer cancel()
-	var logs []rpcLogWithTxHash
-	err := b.rpc.CallContext(ctx, &logs, "eth_getLogs", map[string]interface{}{
-		"fromBlock": blockNumber,
-		"toBlock":   blockNumber,
-		"topics":    []string{tokenHubTransferInSuccessEventSignature},
 	})
 	if err != nil {
 		return nil, errors.Annotatef(err, "blockNumber %v", blockNumber)
@@ -552,22 +528,11 @@ func (b *EthereumRPC) GetBlock(hash string, height uint32) (*bchain.Block, error
 	if err != nil {
 		return nil, errors.Annotatef(err, "hash %v, height %v", hash, height)
 	}
-
 	// get ERC20 events
 	logs, err := b.getERC20EventsForBlock(head.Number)
 	if err != nil {
 		return nil, err
 	}
-
-	// get token hub events
-	thLogs, err := b.getTokenHubEventsForBlock(head.Number)
-	if err != nil {
-		return nil, err
-	}
-	for k, v := range thLogs {
-		logs[k] = append(logs[k], v...)
-	}
-
 	btxs := make([]bchain.Tx, len(body.Transactions))
 	for i := range body.Transactions {
 		tx := &body.Transactions[i]
@@ -580,16 +545,12 @@ func (b *EthereumRPC) GetBlock(hash string, height uint32) (*bchain.Block, error
 			b.Mempool.RemoveTransactionFromMempool(tx.Hash)
 		}
 	}
-
 	bbk := bchain.Block{
 		BlockHeader: *bbh,
 		Txs:         btxs,
 	}
 	return &bbk, nil
 }
-
-//[{{false []}  0 { []}}]
-//[{{false [18816552000000000]}  0 { [0x0000000000000000000000000000000000001000]}}]
 
 // GetBlockInfo returns extended header (more info than in bchain.BlockHeader) with a list of txids
 func (b *EthereumRPC) GetBlockInfo(hash string) (*bchain.BlockInfo, error) {
@@ -621,45 +582,6 @@ func (b *EthereumRPC) GetBlockInfo(hash string) (*bchain.BlockInfo, error) {
 // It could be optimized for mempool, i.e. without block time and confirmations
 func (b *EthereumRPC) GetTransactionForMempool(txid string) (*bchain.Tx, error) {
 	return b.GetTransaction(txid)
-}
-
-var tokenHubAddr = ethcommon.HexToAddress("0x0000000000000000000000000000000000001004")
-var thOnce sync.Once
-var mTokenHub *bchain.Tokenhub
-
-func (b *EthereumRPC) getTokenHub() *bchain.Tokenhub {
-	thOnce.Do(func() {
-		th, err := bchain.NewTokenhub(tokenHubAddr, b.client)
-		if err != nil {
-			glog.Errorf("fail to create tokenhub instance: %v", err)
-		} else {
-			mTokenHub = th
-		}
-	})
-
-	return mTokenHub
-}
-
-func (b *EthereumRPC) BscTypeGetTokenHub() (*bchain.Tokenhub, error) {
-	th := b.getTokenHub()
-	if th == nil {
-		return nil, fmt.Errorf("tokenhub has not init")
-	}
-
-	return th, nil
-}
-
-func (b *EthereumRPC) EthereumTypeGetReceipt(txid string)(*bchain.TransactionReceipt, error)  {
-	ctx, cancel := context.WithTimeout(context.Background(), b.timeout)
-	defer cancel()
-	hash := ethcommon.HexToHash(txid)
-	receipt, err := b.client.TransactionReceipt(ctx, hash)
-	if err != nil {
-		return nil, err
-	}
-	return &bchain.TransactionReceipt{
-		ContractAddress: receipt.ContractAddress.String(),
-	}, nil
 }
 
 // GetTransaction returns a transaction by the transaction ID.
