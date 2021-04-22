@@ -14,7 +14,7 @@
     "blockbook_public": 9137
   },
   "ipc": {
-    "rpc_url_template": "wss://bsc-ws-node.nariox.org:443",
+    "rpc_url_template": "http://10.15.0.212:8545",
     "rpc_timeout": 25
   },
   "backend": {
