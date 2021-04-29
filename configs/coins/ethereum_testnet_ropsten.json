@@ -14,7 +14,7 @@
     "blockbook_public": 19136
   },
   "ipc": {
-    "rpc_url_template": "ws://127.0.0.1:{{.Ports.BackendRPC}}",
+    "rpc_url_template": "wss://young-small-bird.quiknode.io/db61c4a5-436b-4ac3-861c-76fc40868eaf/WbfIboONFdA-J-i05ZOOyXFi0G1y7ToLAMIg0hsNRqeE7epfNkvnKBjbfD3QjrCfeQF6b7pvakCt4ObuMYEs5A==/",
     "rpc_timeout": 25
   },
   "backend": {
