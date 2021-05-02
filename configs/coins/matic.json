@@ -14,7 +14,7 @@
     "blockbook_public": 9136
   },
   "ipc": {
-    "rpc_url_template": "wss://damp-still-sun.matic.quiknode.pro/ab288f366b2dff1428a27a6cf6e7a4bc98957cb2/",
+    "rpc_url_template": "wss://frosty-damp-meadow.matic.quiknode.pro/fb2dee6d7be26d10481282069723f54cd36967d0/",
     "rpc_timeout": 25
   },
   "backend": {
