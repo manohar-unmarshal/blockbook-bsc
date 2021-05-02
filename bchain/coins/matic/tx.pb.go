@@ -10,7 +10,7 @@ It is generated from these files:
 It has these top-level messages:
 	ProtoCompleteTransaction
 */
-package eth
+package matic
 
 import proto "github.com/golang/protobuf/proto"
 import fmt "fmt"

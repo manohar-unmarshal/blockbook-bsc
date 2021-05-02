@@ -1,9 +1,9 @@
 {
   "coin": {
-    "name": "Polygon",
+    "name": "Matic",
     "shortcut": "MAT",
     "label": "Matic",
-    "alias": "polygon"
+    "alias": "matic"
   },
   "ports": {
     "backend_rpc": 8036,

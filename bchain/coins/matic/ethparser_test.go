@@ -1,6 +1,6 @@
 // +build unittest
 
-package eth
+package matic
 
 import (
 	"encoding/hex"
